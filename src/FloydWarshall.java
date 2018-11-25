@@ -1,30 +1,22 @@
-import javafx.util.Pair;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
 
-class ShortestPath implements Callable {
+class ShortestPath implements Runnable {
 
-    private static int i;
-    private static int k;
-    private static int d[][];
-    private static int dim;
+    private final int i;
+    private final int k;
+    private final int[][] d;
+    private final int dim;
     private static final int I = Integer.MAX_VALUE; // Infinity
-    Pair<Integer, int[]> returnPair;
 
-    public ShortestPath(int i, int k, int d[][], int dim) {
+    public ShortestPath(int i, int k, int[][] d, int dim) {
         this.i = i;
         this.k = k;
         this.d = d;
         this.dim = dim;
-        returnPair = new Pair<>(this.i,d[this.i]);
     }
 
-    @Override
-    public Pair<Integer,int[]> call() {
-
+    public void run() {
         for (int j = 0; j < dim; j++) {
             if (d[i][k] == I || d[k][j] == I) {
                 continue;
@@ -32,8 +24,6 @@ class ShortestPath implements Callable {
                 d[i][j] = d[i][k] + d[k][j];
             }
         }
-
-        return returnPair;
     }
 }
 
@@ -81,17 +71,11 @@ public class FloydWarshall extends Thread {
             //Iterate over all i solving for j through k
             ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
             try{
-                List<Future<Pair<Integer,int[]>>> resultList = new ArrayList<Future<Pair<Integer,int[]>>>();
 //return i as a future but need to add it in order
                 for (int i = 0; i < dim; i++) {
-                    Callable callable = new ShortestPath(i,k,d,dim);
-                    Future<Pair<Integer,int[]>> results =  executorService.submit(callable);
-                    resultList.add(results);
-                }
-                for(Future<Pair<Integer,int[]>> pair:resultList){
-                    int index = pair.get().getKey();
-                    int[] array = pair.get().getValue();
-                    d[index] = array;
+                    Runnable runnable= new ShortestPath(i,k,d,dim);
+                    executorService.execute(runnable);
+
                 }
             }catch (Exception e){
                 e.printStackTrace();

@@ -12,16 +12,19 @@ class ShortestPath implements Callable {
     private static int d[][];
     private static int dim;
     private static final int I = Integer.MAX_VALUE; // Infinity
+    Pair<Integer, int[]> returnPair;
 
     public ShortestPath(int i, int k, int d[][], int dim) {
         this.i = i;
         this.k = k;
         this.d = d;
         this.dim = dim;
+        returnPair = new Pair<>(this.i,d[this.i]);
     }
 
     @Override
     public Pair<Integer,int[]> call() {
+
         for (int j = 0; j < dim; j++) {
             if (d[i][k] == I || d[k][j] == I) {
                 continue;
@@ -29,14 +32,15 @@ class ShortestPath implements Callable {
                 d[i][j] = d[i][k] + d[k][j];
             }
         }
-        return new Pair<>(i,d[i]);
+
+        return returnPair;
     }
 }
 
 
 public class FloydWarshall extends Thread {
     private static final int I = Integer.MAX_VALUE; // Infinity
-    private static final int dim = 5000;
+    private static final int dim = 50;
     private static double fill = 0.3;
     private static int maxDistance = 100;
     private static int adjacencyMatrix[][] = new int[dim][dim];
@@ -81,19 +85,20 @@ public class FloydWarshall extends Thread {
 //return i as a future but need to add it in order
                 for (int i = 0; i < dim; i++) {
                     Callable callable = new ShortestPath(i,k,d,dim);
-//                    Runnable runnable = new ShortestPath(i, k, d, dim);
                     Future<Pair<Integer,int[]>> results =  executorService.submit(callable);
                     resultList.add(results);
                 }
                 for(Future<Pair<Integer,int[]>> pair:resultList){
-                    d[pair.get().getKey()] = pair.get().getValue();
+                    int index = pair.get().getKey();
+                    int[] array = pair.get().getValue();
+                    d[index] = array;
                 }
             }catch (Exception e){
                 e.printStackTrace();
             }
 
             executorService.shutdown();
-            System.out.println("pass " + (k + 1) + "/" + dim);
+//            System.out.println("pass " + (k + 1) + "/" + dim);
             //threads wait
         }
     }
@@ -132,10 +137,12 @@ public class FloydWarshall extends Thread {
         public static void main (String[]args){
             long start, end;
             generateMatrix();
+            print(d);
             start = System.nanoTime();
             execute();
             end = System.nanoTime();
             System.out.println("time consumed: " + (double) (end - start) / 1000000000);
             compare(d, d);
+            print(d);
         }
     }

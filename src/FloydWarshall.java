@@ -1,5 +1,6 @@
 import java.util.Random;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class ShortestPath implements Runnable {
 
@@ -24,18 +25,25 @@ class ShortestPath implements Runnable {
                 d[i][j] = d[i][k] + d[k][j];
             }
         }
+        FloydWarshall.vertexCount.getAndIncrement();
     }
 }
 
 
 public class FloydWarshall extends Thread {
     private static final int I = Integer.MAX_VALUE; // Infinity
-    private static final int dim = 50;
+    private static final int dim = 5000;
     private static double fill = 0.3;
     private static int maxDistance = 100;
     private static int adjacencyMatrix[][] = new int[dim][dim];
     private static int d[][] = new int[dim][dim];
     private static int threadCount = 1;
+    public static AtomicInteger vertexCount = new AtomicInteger(0);
+
+
+    public static void setThreadCount(int threadCount) {
+        FloydWarshall.threadCount = threadCount;
+    }
 
     /*
      * Generate a randomized matrix to use for the algorithm.
@@ -54,7 +62,6 @@ public class FloydWarshall extends Thread {
         }
     }
 
-
     /*
      * Execute Floyd Warshall on adjacencyMatrix.
      */
@@ -67,24 +74,25 @@ public class FloydWarshall extends Thread {
                 }
             }
         }
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         for (int k = 0; k < dim; k++) {
             //Iterate over all i solving for j through k
-            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            vertexCount.set(0);
             try{
 //return i as a future but need to add it in order
                 for (int i = 0; i < dim; i++) {
                     Runnable runnable= new ShortestPath(i,k,d,dim);
                     executorService.execute(runnable);
-
                 }
             }catch (Exception e){
                 e.printStackTrace();
             }
-
-            executorService.shutdown();
+            while(vertexCount.get() != dim){ }
 //            System.out.println("pass " + (k + 1) + "/" + dim);
             //threads wait
         }
+        executorService.shutdown();
+
     }
 
         /*
@@ -119,14 +127,20 @@ public class FloydWarshall extends Thread {
         }
 
         public static void main (String[]args){
-            long start, end;
-            generateMatrix();
-            print(d);
-            start = System.nanoTime();
-            execute();
-            end = System.nanoTime();
-            System.out.println("time consumed: " + (double) (end - start) / 1000000000);
-            compare(d, d);
-            print(d);
+            for(int i =1;i<=10;i++){
+                long start, end;
+                generateMatrix();
+//            print(d);
+
+                start = System.nanoTime();
+                setThreadCount(i);
+                execute();
+                end = System.nanoTime();
+                System.out.println("Thread count: "+threadCount);
+                System.out.println("time consumed: " + (double) (end - start) / 1000000000);
+                compare(d, d);
+            }
+//            print(d);
+
         }
     }

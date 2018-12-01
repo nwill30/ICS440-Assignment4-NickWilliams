@@ -1,8 +1,12 @@
+import jdk.nashorn.internal.codegen.CompilerConstants;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class ShortestPath implements Runnable {
+class ShortestPath implements Callable<Integer> {
 
     private final int i;
     private final int k;
@@ -17,7 +21,8 @@ class ShortestPath implements Runnable {
         this.dim = dim;
     }
 
-    public void run() {
+    public Integer call() throws Exception{
+
         for (int j = 0; j < dim; j++) {
             if (d[i][k] == I || d[k][j] == I) {
                 continue;
@@ -26,6 +31,7 @@ class ShortestPath implements Runnable {
             }
         }
         FloydWarshall.vertexCount.getAndIncrement();
+        return 1;
     }
 }
 
@@ -79,11 +85,14 @@ public class FloydWarshall extends Thread {
             //Iterate over all i solving for j through k
             vertexCount.set(0);
             try{
+                List<Callable<ShortestPath>> callables = new ArrayList<>();
 //return i as a future but need to add it in order
                 for (int i = 0; i < dim; i++) {
-                    Runnable runnable= new ShortestPath(i,k,d,dim);
-                    executorService.execute(runnable);
+                    Callable shortestPath = new ShortestPath(i,k,d,dim);
+                    callables.add(shortestPath);
                 }
+                executorService.invokeAll(callables);
+
             }catch (Exception e){
                 e.printStackTrace();
             }
@@ -127,20 +136,13 @@ public class FloydWarshall extends Thread {
         }
 
         public static void main (String[]args){
-            for(int i =1;i<=10;i++){
                 long start, end;
                 generateMatrix();
-//            print(d);
-
                 start = System.nanoTime();
-                setThreadCount(i);
                 execute();
                 end = System.nanoTime();
                 System.out.println("Thread count: "+threadCount);
                 System.out.println("time consumed: " + (double) (end - start) / 1000000000);
                 compare(d, d);
-            }
-//            print(d);
-
         }
     }

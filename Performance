@@ -1,0 +1,30 @@
+Thread count: 1
+time consumed: 262.838892018
+Comparison succeeded
+Thread count: 2
+time consumed: 142.162226053
+Comparison succeeded
+Thread count: 3
+time consumed: 104.113297458
+Comparison succeeded
+Thread count: 4
+time consumed: 83.892941348
+Comparison succeeded
+Thread count: 5
+time consumed: 79.371977126
+Comparison succeeded
+Thread count: 6
+time consumed: 79.137371908
+Comparison succeeded
+Thread count: 7
+time consumed: 79.476891072
+Comparison succeeded
+Thread count: 8
+time consumed: 79.951269516
+Comparison succeeded
+Thread count: 9
+time consumed: 79.006226988
+Comparison succeeded
+Thread count: 10
+time consumed: 79.721396274
+Comparison succeeded
